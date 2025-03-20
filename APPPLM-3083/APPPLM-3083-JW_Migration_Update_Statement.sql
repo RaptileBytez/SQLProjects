@@ -1,3 +1,8 @@
+/**
+Initial version of the script to mass update the MIGRATION_RULE field (T_MASTER_DAT.MIGRATE).
+Written by Jesco Wurm (ICP) on 19-03-2025
+for APPPLM-3083 - As MAREL business we want to exclude some items on the Full item migration to DPH based on non-PLM only rules but based on item number
+*/
 SELECT master.c_ID, master.part_id, master.migrate, master.migrate_rule
 FROM
     T_MASTER_DAT master

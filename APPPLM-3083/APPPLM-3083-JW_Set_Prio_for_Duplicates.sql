@@ -1,3 +1,8 @@
+/**
+Initial version of the script to mass update the PRIO field (AA_T_MASTER_DAT_ECL_APPPLM3083.PRIO).
+Written by Jesco Wurm (ICP) on 19-03-2025
+for APPPLM-3083 - As MAREL business we want to exclude some items on the Full item migration to DPH based on non-PLM only rules but based on item number
+*/
 SELECT COUNT (*) FROM T_MASTER_DAT WHERE MIGRATE = 'n';
 
 SELECT * FROM T_MASTER_DAT WHERE MIGRATE = 'n' AND PART_ID NOT IN (SELECT PART_ID FROM AA_T_MASTER_DAT_ECL_APPPLM3083);
