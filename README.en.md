@@ -1,6 +1,6 @@
 # SQLPROJECTS Repository [![en](https://img.shields.io/badge/lang-en-red.svg)]
 
-This repository contains a collection of PL/SQL projects (SQL scripts) in the Oracle dialect, each associated with specific JIRA stories or customer-assigned story identifiers. Each subfolder represents a project and includes all related PL/SQL scripts along with supplementary documentation or auxiliary files.
+This repository contains a collection of PL/SQL projects (SQL scripts) in the Oracle dialect, each associated with specific JIRA stories or customer-assigned story identifiers. Each subfolder represents a story and includes all related PL/SQL scripts along with supplementary documentation or auxiliary files.
 
 ## Repository Structure
 
