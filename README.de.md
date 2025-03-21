@@ -1,4 +1,4 @@
-# SQLPROJECTS Repository
+# SQLPROJECTS Repository [![de](https://img.shields.io/badge/lang-de-green.svg)]
 
 Dieses Repository enthält eine Sammlung von PL/SQL-Projekten (SQL-Skripten) im Oracle-Dialekt, die jeweils spezifischen JIRA-Stories bzw. Story-Identifikatoren des Kunden zugeordnet sind. Jeder Unterordner repräsentiert ein Projekt und enthält alle zugehörigen PL/SQL-Skripte sowie ergänzende Dokumentationen oder Hilfsdateien.
 
