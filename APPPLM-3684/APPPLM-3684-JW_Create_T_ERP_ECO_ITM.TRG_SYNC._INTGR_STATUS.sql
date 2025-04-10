@@ -2,6 +2,7 @@
     Date:         3-4-2025
     Function:     Syncing ECO ITM INTGR STATUS to ECO BOM INTGR STATUS
     APPPLM-3684: As a Service MCE I don't want to be blocked using 'Q-Change ABC' when other BOM relations are still being handled by the integration to DPH
+    Purpose:      Trigger to update ECO BOM INTGR STATUS when ECO ITM INTGR STATUS is updated
 */
 CREATE OR REPLACE TRIGGER TRG_SYNC_INTGR_STATUS
 AFTER UPDATE OF ECO_ITM_INTGR_JOB_STATUS ON T_ERP_ECO_ITM
