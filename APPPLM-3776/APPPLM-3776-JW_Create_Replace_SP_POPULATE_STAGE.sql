@@ -56,16 +56,22 @@ CREATE OR REPLACE PROCEDURE SP_POPULATE_STAGE (
 IS
   v_pac_id NUMBER;
 BEGIN
-  -- PAC_ID ermitteln
+  ----------------------------------------------------------------
+  -- 1) PAC_ID Lookup
+  ----------------------------------------------------------------
   SELECT PAC_REF INTO v_pac_id
   FROM T_EWO_DAT
   WHERE ELEM_ID = p_eco_number;
 
-  -- Staging-Tabelle bereinigen
+  ----------------------------------------------------------------
+  -- 2) Clear Staging-Tabelle from previous runs
+  ----------------------------------------------------------------
   DELETE FROM T_ERP_ECO_STAGING
   WHERE ECO_NUMBER = p_eco_number;
 
-  -- Document → Item
+  ----------------------------------------------------------------
+  -- 3) Document → Item
+  ----------------------------------------------------------------
   INSERT INTO T_ERP_ECO_STAGING (
     PAC_ID,
     ECO_NUMBER,
@@ -86,7 +92,8 @@ BEGIN
     CHILD_FREE_NAME,
     CHILD_STEP_ORG_REF,
     CHILD_STEP_NO_REF,
-    ORIGIN_FLAG
+    ORIGIN_FLAG,
+    RELATION_TYPE
   )
   SELECT
     v_pac_id,
@@ -111,7 +118,8 @@ BEGIN
     CASE 
       WHEN ao_item.OBJ_CID IS NOT NULL THEN 'direct' 
       ELSE 'inferred' 
-    END
+    END,
+    'Document→Item'
   FROM V_PAC_OBJ ao_doc
   JOIN T_DOC_DAT ad 
     ON ao_doc.OBJ_CID = ad.C_ID AND ao_doc.C_ENTNAM = 'EDB-DOCUMENT'
@@ -123,7 +131,9 @@ BEGIN
     ON ao_item.OBJ_CID = prt.C_ID AND ao_item.PAC_ID = v_pac_id
   WHERE ao_doc.PAC_ID = v_pac_id;
 
-  -- Item → Document
+  ----------------------------------------------------------------
+  -- 4) Item → Document (only inferred)
+  ----------------------------------------------------------------
   INSERT INTO T_ERP_ECO_STAGING (
     PAC_ID,
     ECO_NUMBER,
@@ -144,7 +154,8 @@ BEGIN
     CHILD_FREE_NAME,
     CHILD_STEP_ORG_REF,
     CHILD_STEP_NO_REF,
-    ORIGIN_FLAG
+    ORIGIN_FLAG,
+    RELATION_TYPE
   )
   SELECT
     v_pac_id,
@@ -166,7 +177,8 @@ BEGIN
     dd.FREE_NAME,
     dd.STEP_ORG_REF,
     dd.STEP_NO_REF,
-    'inferred'
+    'inferred',
+    'Item→Document'
   FROM V_PAC_OBJ ao_item
   JOIN T_MASTER_DAT ai 
     ON ao_item.OBJ_CID = ai.C_ID AND ao_item.C_ENTNAM = 'EDB-ARTICLE'
@@ -179,6 +191,9 @@ BEGIN
   WHERE ao_item.PAC_ID = v_pac_id
     AND ao_doc.OBJ_CID IS NULL;
 
+  ----------------------------------------------------------------
+  -- 5) Commit
+  ----------------------------------------------------------------
   COMMIT;
 END;
 /
