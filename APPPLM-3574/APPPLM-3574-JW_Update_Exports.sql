@@ -34,6 +34,9 @@ DECLARE
   rows_updated_prc  INTEGER := 0;
 BEGIN
   -- Configuration
+  -- Please ensure that the old and new server paths are correct and match your environment.
+  -- The following old server paths are based on the PQE environment and my differ in other environments.
+
   loc_tab(1)  := t_loc('AAR', '\\aarsr0039\PLMView', '\\AARSR0044\PLMView');
   loc_tab(2)  := t_loc('BOX', '\\BOXSR0126\PLMView', '\\BOXSR0035\PLMView');
   loc_tab(3)  := t_loc('COL', '\\COLSR0024\PLMView', '\\COLSR0035\PLMView');
@@ -44,7 +47,8 @@ BEGIN
   loc_tab(8)  := t_loc('GUP', '\\GUPSR0050\PLMview', '\\GUPSR0035\PLMView');
   loc_tab(9)  := t_loc('NRA', '\\nrasr0024\plmview_2', '\\NRASR0035\PLMView');
   loc_tab(10) := t_loc('PRC', '\\PRCSR0006\PLMView', '\\CPQSR0060\PLMView');
-  loc_tab(11) := t_loc('STO', '\\STOSR0034\PLMView', '\\STOSR0035\PLMView');
+  loc_tab(11) := t_loc('STO', '\\STOSR0037\PLMView', '\\STOSR0035\PLMView');
+  
   -- Important note: 
   -- Do not delete the \ or the Replace Function will also Update PLMViewCentral entries
   loc_tab(12) := t_loc('DC1', '\\dc1sr2063\PLMview\', '\\DC1SR1052\PLMView\'); --special case for DC1
