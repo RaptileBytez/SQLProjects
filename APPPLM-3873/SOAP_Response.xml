@@ -1,0 +1,77 @@
+<S:Envelope xmlns:S="http://schemas.xmlsoap.org/soap/envelope/">
+    <S:Body>
+        <ns0:getObjectsResponse xmlns:ns0="http://xmlns.oracle.com/Agile/e6/core/BusinessObject/V3"
+            xmlns:ns1="http://xmlns.oracle.com/Agile/e6/core/Common/V3">
+            <getObjectsResponse>
+                <messageId>?</messageId>
+                <messageName>?</messageName>
+                <statusCode>SUCCESS</statusCode>
+                <ticket>The ticket value has been removed for the screenshot for security reasons!</ticket>
+                <recordLimitHit>false</recordLimitHit>
+                <objects>
+                    <plmClass id="EDB-ARTICLE#SFS-ASMAINT-WSI-SLI" name="EDB-ARTICLE" mask="SFS-ASMAINT-WSI-SLI"/>
+                    <id>
+                        <ns1:StringAttribute name="T_MASTER_DAT.C_ID" type="STRING">
+                            <value>1432584636</value>
+                        </ns1:StringAttribute>
+                    </id>
+                    <attributes>
+                        <ns1:StringAttribute name="T_MASTER_DAT.C_ID" type="STRING">
+                            <value>1432584636</value>
+                        </ns1:StringAttribute>
+                    </attributes>
+                    <attributes>
+                        <ns1:StringAttribute name="T_MASTER_DAT.PART_ID" type="STRING">
+                            <value>3768683</value>
+                        </ns1:StringAttribute>
+                    </attributes>
+                    <attributes>
+                        <ns1:StringAttribute name="T_MASTER_DAT.PMT_STBN_ENG" type="STRING">
+                            <value>OVERHEAD CONVEYOR</value>
+                        </ns1:StringAttribute>
+                    </attributes>
+                    <attributes>
+                        <ns1:StringAttribute name="T_MASTER_DAT.FREE_NAME" type="STRING">
+                            <value>RVS SIGMA/T90</value>
+                        </ns1:StringAttribute>
+                    </attributes>
+                    <attributes>
+                        <ns1:StringAttribute name="T_CMG_MCO_DAT.USER_SNO" type="STRING">
+                            <value>10094196</value>
+                        </ns1:StringAttribute>
+                    </attributes>
+                    <attributes>
+                        <ns1:BooleanAttribute name="T_CMG_MCO_DAT.END_ITEM" type="BOOLEAN">
+                            <value>true</value>
+                        </ns1:BooleanAttribute>
+                    </attributes>
+                    <attributes>
+                        <ns1:StringAttribute name="T_CIM_DAT.SFS_MCODE" type="STRING">
+                            <value>B0161</value>
+                        </ns1:StringAttribute>
+                    </attributes>
+                    <attributes>
+                        <ns1:StringAttribute name="T_CIM_DAT.UITVOERING" type="STRING">
+                            <value>07</value>
+                        </ns1:StringAttribute>
+                    </attributes>
+                    <attributes>
+                        <ns1:StringAttribute name="T_CIM_DAT.SFS_STATE" type="STRING">
+                            <value>Active</value>
+                        </ns1:StringAttribute>
+                    </attributes>
+                    <attributes>
+                        <ns1:StringAttribute name="T_CIM_DAT.SFS_LINE" type="STRING">
+                            <value>01</value>
+                        </ns1:StringAttribute>
+                    </attributes>
+                    <attributes>
+                        <ns1:StringAttribute name="T_CFG_MOD_DAT.VALUE" type="STRING">
+                            <value>CP</value>
+                        </ns1:StringAttribute>
+                    </attributes>
+                </objects>
+            </getObjectsResponse>
+        </ns0:getObjectsResponse>
+    </S:Body>
+</S:Envelope>

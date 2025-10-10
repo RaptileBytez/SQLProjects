@@ -1,0 +1,38 @@
+<!-- Endpoint used: http://vdc1plmasdev01:7119/CoreServices/BusinessObjectService -->
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:v3="http://xmlns.oracle.com/Agile/e6/core/BusinessObject/V3">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <v3:getObjects>
+         <!--Optional:-->
+         <getObjectsRequest>
+            <!--Optional:-->
+            <messageId>?</messageId>
+            <!--Optional:-->
+            <messageName>?</messageName>
+            <!--Optional:-->
+            <sessionTicket>?</sessionTicket>
+            <plmQuery includeBinaryValues="?" includeAllLanguages="?" omitEmptyValues="?">
+               <!--Zero or more repetitions:-->
+               <attributeNames>T_CMG_MCO_DAT.USER_SNO</attributeNames>
+               <attributeNames>T_CMG_MCO_DAT.END_ITEM</attributeNames>
+			<attributeNames>T_MASTER_DAT.PART_ID</attributeNames>
+			<attributeNames>T_MASTER_DAT.PMT_STBN_ENG</attributeNames>
+			<attributeNames>T_MASTER_DAT.FREE_NAME</attributeNames>
+			<attributeNames>T_CIM_DAT.SFS_MCODE</attributeNames>
+			<attributeNames>T_CIM_DAT.UITVOERING</attributeNames>
+			<attributeNames>T_CIM_DAT.SFS_STATE</attributeNames>
+			<attributeNames>T_CIM_DAT.SFS_LINE</attributeNames>
+			<attributeNames>T_CFG_MOD_DAT.VALUE</attributeNames>
+               <plmClass id="?" name="EDB-ARTICLE" mask="SFS-ASMAINT-WSI-SLI"/>
+               <!--1 or more repetitions:-->
+               <selection>
+                  <name>T_CMG_MCO_DAT.USER_SNO</name>
+                  <value>10094196</value>
+               </selection>
+               <ignoreRecordLimit>false</ignoreRecordLimit>
+               <countOnly>false</countOnly>
+            </plmQuery>
+         </getObjectsRequest>
+      </v3:getObjects>
+   </soapenv:Body>
+</soapenv:Envelope>
