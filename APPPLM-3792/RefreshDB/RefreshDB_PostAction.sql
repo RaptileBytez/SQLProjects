@@ -22,6 +22,8 @@ define runEnableUserGroups = FALSE
 define runEnableTST_Users = FALSE
 define runTrackUrl = FALSE
 define runVaultUrl = FALSE
+--added for APPPLM-3792
+define runMpsTasksUpd = FALSE
 
 --location of the post-action-scripts
 define SCRIPT_PATH = C:\LocalData\SourceTree\deployment\RefreshDB
@@ -565,6 +567,22 @@ Begin
   end if;
 End;
 /
+
+--Changes for MPS_TASKS Update added for APPPLM-3792
+prompt .
+prompt CHange the values of TASK_PC and TASK_PROGRAMPARAMS in MPS_TASKS
+begin
+  if '&runMpsTasksUpd' = 'TRUE' then   
+    update MPS_TASKS
+    set TASK_PC = '&mpsTaskPc',
+        TASK_PROGRAMPARAMS = '&mpsTaskProgParams'
+    where TASK_ID = 19;
+    DBMS_OUTPUT.put_line ( 'MPS_TASKS: '||SQL%rowcount||' records updated.' );    
+  else
+    DBMS_OUTPUT.put_line ( 'Skipped for environment "'||'&DbEnv'||'".' );
+  end if;
+end;
+/ 
 
 commit;
 spool off

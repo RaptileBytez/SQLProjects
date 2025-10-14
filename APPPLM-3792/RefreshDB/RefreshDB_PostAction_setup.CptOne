@@ -16,6 +16,7 @@ define runEnableTST_Users = TRUE
 define runDelSite = TRUE
 define runTrackUrl = TRUE
 define runVaultUrl = TRUE
+define runMpsTasksUpd = TRUE
 
 --set IP-addresses of storage-nodes site-specific:
 --Value-set for T_STORE_AREA-update
@@ -66,3 +67,7 @@ define trackUrl = 'TRACKURL_NA'
 
 --Update Vault URL
 define vaultUrl = 'VAULTURL_NA'
+
+--Update MPS_TASKS values
+define mpsTaskPc = ''
+define mpsTaskProgParams = ''

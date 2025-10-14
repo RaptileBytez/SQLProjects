@@ -16,6 +16,7 @@ define runEnableTST_Users = TRUE
 define runDelSite = TRUE
 define runTrackUrl = TRUE
 define runVaultUrl = TRUE
+define runMpsTasksUpd = TRUE
 
 --set IP-addresses of storage-nodes site-specific:
 --Value-set for T_STORE_AREA-update
@@ -66,3 +67,7 @@ define trackurl = 'https://marelholdingbv-tst.outsystemsenterprise.com/track/Con
 
 --Update Vault URL
 define vaultUrl = 'http://DC1PB7116:23475/api/Command/ --noproxy DC1PB7116'
+
+--Update MPS_TASKS values
+define mpsTaskPc = 'TSKPC04'
+define mpsTaskProgParams = ''
