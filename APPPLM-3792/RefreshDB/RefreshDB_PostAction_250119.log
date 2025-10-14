@@ -1,0 +1,118 @@
+read environment-specific values from RefreshDB_PostAction_setup.PROD
+.
+Running generic changes for all environments
+T_CFG_DAT: 8 records updated.
+Delete Login history by truncating T_SFS_FS_LOG and T_LOGIN_HIS
+
+.
+Set IP-addresses of storage-nodes site-specific
+Updating T_STORE_AREA "dc1" to node "10.99.20.190".
+T_STORE_AREA: 1069 records updated.
+
+.
+Vault actions for shared fileservers for '' ('','' ; '','')
+Skipped for environment "PROD".
+
+.
+Deleting PLM-configuration parameters %PVM% not belonging to these sites: 'dc1'
+T_CFG_DAT: 101 records deleted.
+
+.
+Updating PLM-configuration parameters by replacing values
+Updating T_CFG_DAT "dc1" and "@EDB-PVM-AV-DMS@EDB-PVM-AV-PROXY@" by replacing "dc1sr0151" by "dc1sr3022".
+T_CFG_DAT: 2 records updated.
+
+.
+Allowed FMS Paths
+Updating T_CFG_DAT "SFS-ERP-PRC" to "\\cpqsr0043\PLM$\TEST\QS".
+T_CFG_DAT: 1 records updated.
+Updating T_CFG_DAT "SFS-ERP-NRA" to "\\NRASR0004\PLMVIEW\ERPTEST".
+T_CFG_DAT: 1 records updated.
+Updating T_CFG_DAT "SFS-ERP-DAX" to "\\DC1SR0202\PLM_TEST\QS".
+T_CFG_DAT: 1 records updated.
+Updating T_CFG_DAT "SFS-HPPLOT-CHKOUT-PATH" to "\\DC1SR0079\plmdata\plm_qs_6210\HP_PLOT".
+T_CFG_DAT: 1 records updated.
+
+.
+Disabling site-replication for all sites except: ''
+Skipped for environment "PROD".
+
+.
+Update PPO configuration to "\\DC1SR3070\Input_PLM\PPO"
+T_PPO_ASV_SPA: 1 records updated.
+T_CFG_DAT: 1 records updated.
+
+.
+Update export-processes
+Updating SFS_PRC_CITY.OUTPUT_DIR to prefix "QS\".
+SFS_PRC_CITY: 902 records updated.
+Updating SFS_PRC_CITY.DSF_SERVER_REMOTE to value "\\dc1sr2063\PLMview\..." for PDFPRINT.
+SFS_PRC_CITY: 11 records updated.
+Correcting SFS_PRC_CITY.PLOT_SITE to value "dc1" for "PDFPRINTPICKUP" .
+SFS_PRC_CITY: 19 records updated.
+Updating SFS_PRC_CITY.PLOT_SITE to value "dc1" for CONVERT*, IGES* and EXPORT_NATIVE(ACAD).
+SFS_PRC_CITY: 359 records updated.
+Correcting SFS_PRC_CITY.PLOT_SITE to value "dc1".
+SFS_PRC_CITY: 11 records updated.
+Updating SFS_PRC_CITY.DSF_SERVER_REMOTE to value "\\dc1sr2063\PLMview\..." for ABC_EXPORT and MWO-EXPORT.
+SFS_PRC_CITY: 24 records updated.
+Updating SFS_PRC_CITY.PLOT_SITE "DSM" to value "dc1".
+SFS_PRC_CITY: 27 records updated.
+Updating SFS_PRC_CITY.PLOT_SITE "GAI" to value "dc1".
+SFS_PRC_CITY: 27 records updated.
+Updating SFS_PRC_CITY.PLOT_SITE "GRB" to value "dc1".
+SFS_PRC_CITY: 27 records updated.
+Updating SFS_PRC_CITY.PLOT_SITE "BOX" to value "dc1".
+SFS_PRC_CITY: 27 records updated.
+Updating SFS_PRC_CITY.PLOT_SITE "COL" to value "dc1".
+SFS_PRC_CITY: 27 records updated.
+Updating SFS_PRC_CITY.PLOT_SITE "AAR" to value "dc1".
+SFS_PRC_CITY: 27 records updated.
+Updating SFS_PRC_CITY.PLOT_SITE "STO" to value "dc1".
+SFS_PRC_CITY: 27 records updated.
+Updating SFS_PRC_CITY.PLOT_SITE "AMER" to value "dc1".
+SFS_PRC_CITY: 24 records updated.
+Updating SFS_PRC_CITY.PLOT_SITE "BNE" to value "dc1".
+SFS_PRC_CITY: 6 records updated.
+Updating SFS_PRC_CITY.PLOT_SITE "EIN" to value "dc1".
+SFS_PRC_CITY: 27 records updated.
+Updating SFS_PRC_CITY.PLOT_SITE "PRC" to value "dc1".
+SFS_PRC_CITY: 6 records updated.
+
+.
+Update Creo norm models' location
+T_DOC_DAT: 9627 records updated.
+T_DOC_DAT: 3536 records updated.
+T_DOC_DAT: 1 records updated.
+
+.
+Changes of e-mail-sender information
+T_PRS_DAT: 3424 records updated to itsupport.plm@marel.com.
+T_CFG_DAT: 10 records updated to itsupport.plm@marel.com.
+T_CFG_DAT: 1 records updated to itsupport.plm.prod@marel.com.
+
+.
+Changes of user accounts
+T_USER: 2996 users disabled.
+T_USER: 0 users enabled.
+
+.
+Enabling of user groups
+Skipped for environment "PROD".
+
+.
+Enabling of PLM test users beginning with TST_
+T_USER: 18 disabled PLM test users beginning with TST_ enabled.
+
+.
+Changes of TRACK URL parameter
+T_CFG_DAT: 1 records updated to new TRACK URL 
+
+.
+Changes of VAULT URL parameter
+T_CFG_DAT: 1 records updated to new VAULT URL 
+
+.
+Execute the procedure delSiteFromEnvironment for each affected site
+Skipped for environment "PROD".
+

@@ -1,0 +1,68 @@
+--set execution-controls
+define runAllEnvironmentGenericChange = TRUE
+define runStorageNodeChange = TRUE
+define runVaultAct = FALSE
+define runDelPVMCfg = TRUE
+define runReplCfgVal = TRUE
+define runAllowedPath = TRUE
+define runDisableSiteRepl = TRUE
+define runPpoCfg = TRUE
+define runExpProc = TRUE
+define runCreoNrmModLoc = TRUE
+define runEMailAddress = TRUE
+define runUsers = TRUE
+define runEnableUserGroups = FALSE
+define runEnableTST_Users = TRUE
+define runDelSite = TRUE
+define runTrackUrl = TRUE
+define runVaultUrl = TRUE
+
+--set IP-addresses of storage-nodes site-specific:
+--Value-set for T_STORE_AREA-update
+define siteList01 =  dc1 
+define StoreNodeList =  10.99.25.73
+
+--prompt Vault actions for shared fileservers (skipped for PQE)
+define replStoreArea = "'',''"
+define replStoreDiscPat = "'',''"
+define storeArea = ''
+define site = ''
+
+--AutoVue configuration change
+--Deleting PLM-configuration parameters %PVM% not belonging to these sites: &siteList03
+define siteList03 = "'dc1'"
+
+--prompt Updating PLM-configuration parameters by replacing values
+define siteList04 = dc1
+define searchPatternList01 = @EDB-PVM-AV-DMS@EDB-PVM-AV-PROXY@
+define replParList01 = dc1sr0151>dc1sr3022
+
+--Allowed FMS Paths
+define cfgEdbIdList01 = SFS-ERP-PRC,SFS-ERP-NRA,SFS-ERP-DAX,SFS-HPPLOT-CHKOUT-PATH 
+define cfgEdbValList01 = \\azbrssr0003\PLM$\TEST\PQE,\\NRASR0004\PLMVIEW\ERPTEST,\\DC1SR1125\PLM_TEST\PQE,\\DC1SR0079\plmdata\marelpqe_6210\HP_PLOT
+
+--Disabling site-replication (exclusion list)
+define siteList05 = "'DC1'"
+
+--Update PPO configuration 
+define ppoCfgSrv01 = \\DC1SR3071\Input_PLM\PPO
+
+--Update export-processes
+define dropLocPrFx01 = PQE\
+define expProcSiteList01 = "'DC1'"
+define expProcSiteList02 = "'DC1'"
+define expProcSiteList03 = DSM,GAI,GRB,BOX,COL,AAR,STO,AMER,BNE,EIN,PRC
+define expProcSiteList04 = dc1,dc1,dc1,dc1,dc1,dc1,dc1,dc1,dc1,dc1,dc1
+define expProcGrbCorrect = dc1
+
+--Update users
+define enableUsers = "'F_BEEREN','I_VD_BROEK','M_BASTIAANS','M_DAMEN','Y_POTHOFF','J_JANSSEN','R_DRABBELS'"
+
+--Execute procedures to remove all references to not existing sites
+define siteList02 = aar,bra,col,dsm,gam,grb,gup,sto,az1
+
+--Update Track URL
+define trackurl = 'https://marelholdingbv-tst.outsystemsenterprise.com/track/ConcernDetail.aspx?ConcernId='
+
+--Update Vault URL
+define vaultUrl = 'http://DC1PB7116:23475/api/Command/ --noproxy DC1PB7116'
