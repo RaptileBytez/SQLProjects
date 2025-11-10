@@ -6,6 +6,7 @@
 :: 20-06-2018 Jos van den Houdt, physicalloc LXA added 
 :: 06-02-2024 S.Diedershagen JIRA: APPPLM-2887 As a PLM user located in the GDC I want to connect to PLM without location issues
 :: 25-09-2025 H.Hackenberg JIRA: APPPLM-3381 As an Azure user I want an Azure device connect to AZ1 physical location and AZ1 file server 
+:: 24.10.2025 J.Wurm JIRA: APPPLM-3924 As a PLM User in JBT Marel domain I want to keep on using VPN possibilities to connect to Agile PLM
 
 :: set the default file server, for example data center or Boxmeer
 set DefFileServer=dc1
@@ -30,6 +31,13 @@ IF %plmclientip%=="" goto NOIP
 FOR /f "tokens=1,2,3,4 delims=." %%a in ("%plmclientip%") do set IP1=%%a&set IP2=%%b&set IP3=%%c&set IP4=%%d
 set vpnusertype=VPN
 
+:: === New AZURE VPN IP Ranges (APPPLM-3924)===
+IF %IP1%==10 IF %IP2%=110 goto IP_5_US
+IF %IP1%==10 IF %IP2%=120 goto IP_5_EMEA
+IF %IP1%==10 IF %IP2%=130 goto IP_5_OCE
+IF %IP1%==10 IF %IP2%=140 goto IP_5_APAC
+IF %IP1%==10 IF %IP2%=150 goto IP_5_LATAM
+
 REM No spaces behind set EPDDMSITE=pmt
 IF %IP1%==10 IF %IP2%==111 goto IP_1
 
@@ -47,7 +55,6 @@ set EPDDMSITE=%DefFileServer%
 set PHYSICALLOC=UNKNOWN
 ECHO Unknown vpn connection (%plmclientip%), fileserver set to default:%EPDDMSITE%. 
 pause
-
 
 :NOIP
 	set vpnusertype=NONE
@@ -171,4 +178,34 @@ pause
 					set PHYSICALLOC=CHINA
 					set EPDDMSITE=%DefFileServer%
 				)				
-    goto :EOF				
+    goto :EOF		
+
+:IP_5_US
+	::JBTMarel Azure-VPN US (APPPLM-3924)
+	set PHYSICALLOC=AMER
+	set EPDDMSITE=gam
+	goto :EOF
+
+:IP_5_EMEA
+	::JBTMarel Azure-VPN EMEA (APPPLM-3924)
+	set PHYSICALLOC=EMEA
+	set EPDDMSITE=%DefFileServer%
+	goto :EOF
+
+:IP_5_OCE
+	::JBTMarel Azure-VPN Oceania (APPPLM-3924)
+	set PHYSICALLOC=OCE
+	set EPDDMSITE=%DefFileServer%
+	goto :EOF
+
+:IP_5_APAC
+	::JBTMarel Azure-VPN APAC (APPPLM-3924)
+	set PHYSICALLOC=APAC
+	set EPDDMSITE=%DefFileServer%
+	goto :EOF
+
+:IP_5_LATAM
+	::JBTMarel Azure-VPN LATAM (APPPLM-3924)
+	set PHYSICALLOC=AMER-S
+	set EPDDMSITE=gam
+	goto :EOF		
