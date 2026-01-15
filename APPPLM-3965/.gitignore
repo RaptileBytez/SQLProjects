@@ -1,0 +1,21 @@
+# Python Bytecode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# uv / Virtuelle Umgebungen
+.venv/
+
+# Build-Artefakte
+dist/
+build/
+
+#Database Secrets
+.db_secrets.ini
+
+#Excel Data
+*.xlsx
+
+#Data Files
+*.csv

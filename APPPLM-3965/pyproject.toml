@@ -1,0 +1,12 @@
+[project]
+name = "APPPLM-3965"
+version = "1.0.1"
+description = "MAREL Excel to PLM Pipeline for Product Owners / Product Coordinators"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "openpyxl>=3.1.5",
+    "oracledb>=3.4.1",
+    "pandas>=2.3.3",
+    "sqlalchemy>=2.0.44",
+]
