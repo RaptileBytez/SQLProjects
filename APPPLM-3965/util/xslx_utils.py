@@ -65,7 +65,7 @@ def read_excel_file() -> pd.DataFrame:
     #-- CONFIGURATION --
     EXCEL_FILE_PATH = os.path.join("Excel", "data.xlsx")
 
-    print("\nℹ️\tStep 1: Reading Excel Data File...")
+    print("\nℹ️\tStep 1: Reading Excel Data File...\n")
     try:
         df_excel = pd.read_excel(EXCEL_FILE_PATH)
         df_excel = df_excel[[ 'as mentioned in kolom M, N', 'PO', 'PCME2', 'PCME3']]

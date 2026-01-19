@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from util.xslx_utils import read_excel_file
 from util.string_utils import normalize_name
-from util.db_utils import get_mcode_cids, create_db_engine, test_db_connection, get_person_df, get_prs_cids, insert_relations, insert_history_entries
+from util.db_utils import get_mcode_cids, create_db_engine, get_user_group_cids, test_db_connection, get_person_df, get_prs_cids, insert_relations, insert_history_entries, insert_group_memberships, get_prs_data_by_cid, delete_relations
  
 def evaluate_mcodes(unique_MCODE: np.ndarray, df_mcode_cid: pd.DataFrame, DB_PROFILE: str) ->None:
     df_check = pd.DataFrame({'MCODE': unique_MCODE})
@@ -45,7 +45,7 @@ def evaluate_prs(df_prs: pd.DataFrame, df_prs_cid: pd.DataFrame, group: str, DB_
     # Alle Einträge ohne C_ID → nicht in DB gefunden
     missing_prs = df_merged[df_merged["C_ID"].isna()][[lbl_first_name, lbl_last_name]]
     if missing_prs.empty:
-        print(f"✅\tAll {group} exist in the database.")
+        print(f"✅\tAll {group} are existing in the database {DB_PROFILE}.")
         return
     missing_list = []
     print(f"⚠️\tThe following {len(missing_prs)} {title}(s) are nonexistent in the database {DB_PROFILE}:")
@@ -58,10 +58,41 @@ def evaluate_prs(df_prs: pd.DataFrame, df_prs_cid: pd.DataFrame, group: str, DB_
     print(f"✅\tMissing {group} list saved to 'Data/{DB_PROFILE}_missing_{group}s.csv'.")
 
 def main():
-    print("Version 1.0.1\n\nHello from APPPLM-3965!\nA script to update MCODE - Product Owner - Product Coordinator relationships in a Agile e6 database based on an Excel file.\nWritten by Jesco Wurm.\n")
-    DB_PROFILE = input("Please input the environment you want to update PROD/QS/PQE/BLD? ").strip().upper()
-    perform_update = True
+    print("Version 1.0.5\n\nHello from APPPLM-3965!\nA script to update MCODE - Product Owner - Product Coordinator relationships in a Agile e6 database based on an Excel file.\nWritten by Jesco Wurm.\n")
+    # --- 1. DRY_RUN Abfrage mit Validierung ---
+    while True:
+        reply = input("❓\tDo you want to simulate the run aka. DRY_RUN? (Y/N) ").strip().upper()
+        if reply in ['Y', 'N']:
+            RUN_MODE = 'DRY_RUN' if reply == 'Y' else 'NORMAL'
+            status_text = "DRY_RUN mode. No changes will be made." if reply == 'Y' else "NORMAL mode. Changes will be applied."
+            print(f"ℹ️\tRunning in {status_text}\n")
+            break
+        else:
+            print("❌\tInvalid input. Please enter 'Y' for Yes or 'N' for No.")
 
+    # --- 2. DB_PROFILE Abfrage mit Validierung ---
+    valid_profiles = ['PROD', 'QS', 'PQE', 'BLD']
+    while True:
+        DB_PROFILE = input(f"❓\tPlease input the environment you want to update ({'/'.join(valid_profiles)})? ").strip().upper()
+        if DB_PROFILE in valid_profiles:
+            print(f"ℹ️\tEnvironment set to: {DB_PROFILE}")
+            break
+        else:
+            print(f"❌\tInvalid profile '{DB_PROFILE}'. Allowed values are: {', '.join(valid_profiles)}")
+    
+    if RUN_MODE.upper() == 'NORMAL':
+       while True:
+           confirm = input(f"\n⚠️\tYou are about to make CHANGES to the {DB_PROFILE} environment.\n⚠️\tMake sure you moved the .csv files in the Data folder to a save location.\n\n❓\tAre you sure to continue? (Y/N) ").strip().upper()
+           if confirm == 'Y':
+               print("✅\tConfirmation received. Proceeding with updates.\n")
+               break
+           elif confirm == 'N':
+               print("\n❌\tOperation cancelled by user. Exiting.")
+               exit()
+           else:
+               print("❌\tInvalid input. Please enter 'Y' for Yes or 'N' for No.")
+    perform_update = True
+   
     if DB_PROFILE in ['PROD', 'QS', 'PQE', 'BLD']:
        
         df_xlsx = read_excel_file()
@@ -86,19 +117,25 @@ def main():
         df_MCODEs['MCODE'] = df_xlsx['MCODE']
         unique_MCODE = df_MCODEs['MCODE'].dropna().unique()
         print("ℹ️\tThe provided Excel File contains:")
-        print(f"\t{len(unique_MCODE)} unique MCODEs.")
-
+        print(f"ℹ️\t{len(unique_MCODE)} unique MCODEs.")
+        
         df_POs = pd.DataFrame()
         df_POs['PO'] = df_xlsx['PO']
         df_POs['PO_normalized'] = df_POs['PO'].apply(normalize_name)
         unique_PO = df_POs['PO_normalized'].dropna().unique()
-        print(f"\t{len(unique_PO)} unique Product Owners.")
+        print(f"ℹ️\t{len(unique_PO)} unique Product Owners.")
 
         df_PCs = pd.DataFrame()
         df_PCs['PC'] = pd.concat([df_xlsx['PCME2'], df_xlsx['PCME3']], ignore_index=True)
         df_PCs['PC_normalized'] = df_PCs['PC'].apply(normalize_name)
         unique_PC = df_PCs['PC_normalized'].dropna().unique()
-        print(f"\t{len(unique_PC)} unique Product Coordinators.")
+        print(f"ℹ️\t{len(unique_PC)} unique Product Coordinators.")
+
+        print("\nℹ️\tStep 3: Generating Machine Code User Groups for new Groupmembers...")
+        mcode_user_groups = [item for mcode in unique_MCODE for item in(f"Y_{mcode}", f"Z_{mcode}")]
+        user_groups = np.array(mcode_user_groups)
+        print("ℹ️\tThe User Groups list contains:")
+        print(f"ℹ️\t{len(user_groups)} User Groups.")
 
         engine = create_db_engine(DB_PROFILE)
         test_db_connection(engine)
@@ -113,7 +150,17 @@ def main():
         df_pc = get_person_df(unique_PC, 'PC')
         df_pc_cid = get_prs_cids(engine, unique_PC, 'PC')
         evaluate_prs(df_pc, df_pc_cid, 'PC', DB_PROFILE)
-   
+
+        df_usr_grp_cid = get_user_group_cids(engine, user_groups)
+        df_usr_grp_cid = df_usr_grp_cid.dropna(subset=['C_ID'])
+        df_usr_grp_cid_renamed = df_usr_grp_cid.rename(columns={'C_NAME': 'GROUP_NAME', 'C_ID': 'GROUP_CID'})
+        print(f"ℹ️\tRetrieved {len(df_usr_grp_cid_renamed)} User Group C_IDs from database {DB_PROFILE}.")
+        drops = len(user_groups) - len(df_usr_grp_cid_renamed)
+        if drops >0:
+            print(f"ℹ️\tDropped {len(user_groups) - len(df_usr_grp_cid_renamed)} User Groups that do not exist in the {DB_PROFILE} database.")
+        else:
+            print(f"✅\tAll User Groups are existing in the database {DB_PROFILE}.")
+
         df_extended = df_xlsx.merge(df_mcode_cid, how='left', on='MCODE')
         df_extended = df_extended.rename(columns={'C_ID': 'MCODE_CID'})
         df_extended['MCODE_CID'] = df_extended['MCODE_CID'].astype('Int64')
@@ -149,13 +196,29 @@ def main():
         df_highlighted = pd.DataFrame()
         df_highlighted = df_extended.iloc[highlighted_idx]
         df_highlighted = df_highlighted[['MCODE', 'MCODE_CID', 'PO_normalized', 'PO_FIRST_NAME', 'PO_LAST_NAME', 'PO_CID', 'PO_C_IC', 'PCME2_normalized', 'PCME2_FIRST_NAME', 'PCME2_LAST_NAME', 'PCME2_CID', 'PCME2_C_IC', 'PCME3_normalized', 'PCME3_FIRST_NAME', 'PCME3_LAST_NAME','PCME3_CID', 'PCME3_C_IC']]
-        
+
         df_mis_hlight_mcode_cid = df_highlighted[df_highlighted['MCODE_CID'].isna() == True]
         df_mis_hlight_mcode_cid = df_mis_hlight_mcode_cid[['MCODE', 'MCODE_CID']]
         
         df_mis_hlight_po_cid =  df_highlighted[df_highlighted['PO_CID'].isna() == True]
         df_mis_hlight_po_cid = df_mis_hlight_po_cid[['PO_normalized', 'PO_CID']]
         df_mis_hlight_po_cid = df_mis_hlight_po_cid.drop_duplicates()
+
+        roles = [
+                    {'col': 'PO_CID', 'grp_prefix': 'Z_'},
+                    {'col': 'PCME2_CID', 'grp_prefix': 'Y_'},
+                    {'col': 'PCME3_CID', 'grp_prefix': 'Y_'}
+                ]
+        temp_list = []
+        for role in roles:
+            subset = df_highlighted[['MCODE', 'MCODE_CID',role['col']]].copy()
+            subset['GROUP_NAME'] = role['grp_prefix'] + subset['MCODE']
+            subset = subset.rename(columns={role['col']: 'USER_CID'})
+            temp_list.append(subset)
+        df_group_joins = pd.concat(temp_list).dropna(subset=['USER_CID'])
+        # Join with group C_IDs
+        df_final_grp_joins = pd.merge(df_group_joins, df_usr_grp_cid_renamed,
+                                        left_on='GROUP_NAME', right_on='GROUP_NAME', how='left')
 
         df_extended['BOTH_PC_MIS'] = df_extended['PCME2_CID'].isna() & df_extended['PCME3_CID'].isna()
         df_extended.to_csv(f"Data/{DB_PROFILE}_extended_data_before_update.csv", index=False)
@@ -179,15 +242,39 @@ def main():
             print(df_mis_hlight_mcode_cid)
             print("💡\tPlease contact PLM Support and have the missing Product Coordinators created.")
             perform_update = False
-
+    
         if perform_update:
             next_cid = None                     
-            df_inserts_po = insert_relations(engine, df_highlighted, 'PO', DB_PROFILE, next_cid)
+            df_inserts_po, df_demoted_records = insert_relations(engine, df_highlighted, 'PO', DB_PROFILE, RUN_MODE=RUN_MODE, next_cid=next_cid)
+            
+            if not df_demoted_records.empty:
+                ary_unique_demoted_users = df_demoted_records['PRS_CID'].unique()
+                if ary_unique_demoted_users.size > 0:
+                    df_prs_data = get_prs_data_by_cid(engine, ary_unique_demoted_users)
+                    #print(f"Retrieved demoted owners data columns: {df_prs_data.columns}")
+                    df_demoted_owners = df_demoted_records[['MCODE_CID', 'PRS_CID']].drop_duplicates()
+                    #print(f"Demoted owners before merge columns: {df_demoted_owners.columns}")
+                    # Merge demoted owner names back into df_demoted_owners
+                    df_do_ext = df_demoted_owners.merge(df_prs_data, left_on='PRS_CID', right_on='C_ID', how='left')
+    
+                    #df_demoted_owners = df_demoted_owners.rename(columns={'MCODE_CID': 'C_ID_1','PRS_CID': 'C_ID_2', 'S_FIRST_NAME': 'S_FIRST_NAME', 'S_USER': 'S_USER', 'C_IC': 'C_IC'})
+                    df_do_ext = df_do_ext[['MCODE_CID', 'PRS_CID', 'S_FIRST_NAME', 'S_USER', 'C_IC']]
+
+                    df_history_do = insert_history_entries(engine, df_do_ext, 'DO', DB_PROFILE, RUN_MODE=RUN_MODE)
+                    df_deletes_del = delete_relations(engine, df_do_ext, 'DO', DB_PROFILE, RUN_MODE=RUN_MODE)
+                    df_history_del = insert_history_entries(engine, df_deletes_del, 'DEL', DB_PROFILE, RUN_MODE=RUN_MODE)
+                
             # Merge missing Person Data back into df_inserts_po
             if not df_inserts_po.empty:
                 df_keys = df_highlighted[['MCODE_CID','PO_CID', 'PO_FIRST_NAME','PO_LAST_NAME','PO_C_IC']].drop_duplicates().copy()
                 df_inserts_po = df_inserts_po.reset_index().merge(df_keys, left_on=['C_ID_1','C_ID_2'], right_on=['MCODE_CID','PO_CID'], how='left').set_index('C_ID')
-                df_history_po = insert_history_entries(engine, df_inserts_po, 'PO', DB_PROFILE)
+
+                df_history_po = insert_history_entries(engine, df_inserts_po, 'PO', DB_PROFILE, RUN_MODE=RUN_MODE)
+                # Sort out group inserts for PO
+                df_group_inserts_po = df_final_grp_joins.merge(df_inserts_po[['MCODE_CID', 'PO_CID']], left_on=['MCODE_CID', 'USER_CID'], right_on=['MCODE_CID', 'PO_CID'], how='inner')
+                df_grp_ins_po = insert_group_memberships(engine, df_group_inserts_po, 'PO', DB_PROFILE, RUN_MODE=RUN_MODE)
+            # Reset next_cid for PCME inserts
+            next_cid = None
                         
             # Filter PCME2: keep only rows where PCME2_CID is not null and drop duplicates
             df_extended_pcme2 = df_extended[df_extended['PCME2_CID'].notna()].copy()
@@ -203,19 +290,38 @@ def main():
                 df_extended_pcme3 = df_extended_pcme3[~df_extended_pcme3.apply(lambda r: (r['MCODE_CID'], r['PCME3_CID']) in existing_pcme2_pairs, axis=1)].copy()
 
             # Insert PCME2 relations
-            df_inserts_pcme2 = insert_relations(engine, df_extended_pcme2, 'PCME_2', DB_PROFILE, next_cid)
+            df_inserts_pcme2, df_empty = insert_relations(engine, df_extended_pcme2, 'PCME_2', DB_PROFILE, RUN_MODE=RUN_MODE, next_cid=next_cid)
+            if not df_empty.empty:
+                print("⚠️\tUnexpected non-empty DataFrame returned for demoted owners from PCME_2 insertion.")
+
             if not df_inserts_pcme2.empty:
                 df_keys_pc2 = df_extended_pcme2[['MCODE_CID','PCME2_CID', 'PCME2_FIRST_NAME','PCME2_LAST_NAME','PCME2_C_IC']].drop_duplicates().copy()
                 df_inserts_pcme2 = df_inserts_pcme2.reset_index().merge(df_keys_pc2, left_on=['C_ID_1','C_ID_2'], right_on=['MCODE_CID','PCME2_CID'], how='left').set_index('C_ID')
-                df_history_pcme2 = insert_history_entries(engine, df_inserts_pcme2, 'PCME_2', DB_PROFILE)
-            
-            df_inserts_pcme3 = insert_relations(engine, df_extended_pcme3, 'PCME_3', DB_PROFILE, next_cid)
+                df_history_pcme2 = insert_history_entries(engine, df_inserts_pcme2, 'PCME_2', DB_PROFILE, RUN_MODE=RUN_MODE)
+                 # Sort out group inserts for PCME2
+                df_group_inserts_pcme2 = df_final_grp_joins.merge(df_inserts_pcme2[['MCODE_CID', 'PCME2_CID']], left_on=['MCODE_CID', 'USER_CID'], right_on=['MCODE_CID', 'PCME2_CID'], how='inner')
+                df_grp_ins_pcme2 = insert_group_memberships(engine, df_group_inserts_pcme2, 'PCME_2', DB_PROFILE, RUN_MODE=RUN_MODE)              
+            # Reset next_cid for PCME inserts
+            next_cid = None
+
+            df_inserts_pcme3, df_empty = insert_relations(engine, df_extended_pcme3, 'PCME_3', DB_PROFILE, RUN_MODE=RUN_MODE, next_cid=next_cid)
+            if not df_empty.empty:
+                print("⚠️\tUnexpected non-empty DataFrame returned for demoted owners from PCME_3 insertion.")
+
             if not df_inserts_pcme3.empty:
                 df_keys_pc3 = df_extended_pcme3[['MCODE_CID','PCME3_CID', 'PCME3_FIRST_NAME','PCME3_LAST_NAME','PCME3_C_IC']].drop_duplicates().copy()
                 df_inserts_pcme3 = df_inserts_pcme3.reset_index().merge(df_keys_pc3, left_on=['C_ID_1','C_ID_2'], right_on=['MCODE_CID','PCME3_CID'], how='left').set_index('C_ID')
-                df_history_pcme3 = insert_history_entries(engine, df_inserts_pcme3, 'PCME_3', DB_PROFILE)
+                df_history_pcme3 = insert_history_entries(engine, df_inserts_pcme3, 'PCME_3', DB_PROFILE, RUN_MODE=RUN_MODE)
+                # Sort out group inserts for PCME3
+                df_group_inserts_pcme3 = df_final_grp_joins.merge(df_inserts_pcme3[['MCODE_CID', 'PCME3_CID']], left_on=['MCODE_CID', 'USER_CID'], right_on=['MCODE_CID', 'PCME3_CID'], how='inner')
+                df_grp_ins_pcme3 = insert_group_memberships(engine, df_group_inserts_pcme3, 'PCME_3', DB_PROFILE, RUN_MODE=RUN_MODE)
+            # Reset next_cid for further inserts
+            next_cid = None
 
-            print(f"\n✅\tDatabase update for {DB_PROFILE} completed successfully.")
+            if not RUN_MODE == 'DRY_RUN':
+                print(f"\n✅\tDatabase update for {DB_PROFILE} completed successfully.")
+            else:
+                print(f"\n✅\tDRY_RUN completed for {DB_PROFILE}. No changes were made to the database.")
         else:
             print(f"\n❌\tDatabase update for {DB_PROFILE} aborted due to missing data.")
     else:
