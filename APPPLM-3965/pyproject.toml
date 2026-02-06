@@ -1,6 +1,6 @@
 [project]
 name = "APPPLM-3965"
-version = "1.0.5"
+version = "1.0.7"
 description = "MAREL Excel to PLM Pipeline for Product Owners / Product Coordinators"
 readme = "README.md"
 requires-python = ">=3.14"

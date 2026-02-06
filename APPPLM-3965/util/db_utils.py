@@ -199,6 +199,32 @@ def get_prs_cids(engine: Engine, ary: np.ndarray, group: str) -> pd.DataFrame:
     df_res.columns = df_res.columns.str.upper()
     return df_res
 
+def get_usr_cids_by_cic(engine: Engine, ary: np.ndarray) -> pd.DataFrame:
+    """Fetches C_IDs for users based on their C_ICs.
+    Parameters:
+        engine (Engine): SQLAlchemy Engine connected to the database.
+        ary (np.ndarray): Array of C_ICs.
+    Returns:
+        pd.DataFrame: DataFrame containing C_IC and corresponding C_ID.
+    """
+    print(f"\nℹ️\tFetching user C_IDs by C_ICs from the Database...")
+    c_ic_list = ary.tolist()
+    df_all_usr_cids = pd.DataFrame()
+
+    for chunk in chunk_list(c_ic_list, 1000):
+        qry = text(f"""
+            SELECT C_IC, C_ID
+            FROM T_USER
+            WHERE C_IC IN ({', '.join(f':cic_{i}' for i in range(len(chunk)))})
+        """)
+        params = {f'cic_{i}': c_ic for i, c_ic in enumerate(chunk)}
+
+        with engine.connect() as conn:
+            df_chunk = pd.read_sql(qry, conn, params=params)
+        df_all_usr_cids = pd.concat([df_all_usr_cids, df_chunk], ignore_index=True)
+    df_all_usr_cids.columns = df_all_usr_cids.columns.str.upper()
+    return df_all_usr_cids
+
 def get_prs_data_by_cid(engine: Engine, ary: np.ndarray) -> pd.DataFrame:
     """Fetches person data based on their C_IDs.
     Parameters:
@@ -239,13 +265,13 @@ def insert_history_entries(engine: Engine, df_inserts: pd.DataFrame, group: str,
     table_name = 't_mc_his'
     if group.upper() == 'PO':
         title = 'Product Owner'
-        step_no = 13
+        step_no = 14
     elif group.upper() == 'PCME_2':
         title = 'Product Coordinator'
-        step_no = 16
+        step_no = 17
     elif group.upper() == 'PCME_3':
         title = 'Product Coordinator'
-        step_no = 19
+        step_no = 20
     elif group.upper() == 'DO':
         title = 'Demoted Owner'
         step_no = 10
@@ -277,7 +303,7 @@ def insert_history_entries(engine: Engine, df_inserts: pd.DataFrame, group: str,
     df_record['C_VERSION'] = 1
     df_record['C_LOCK'] = 0
     df_record['C_UIC'] = 1829  # User: PLM_MIGRATOR
-    df_record['C_GIC'] = 1201  # Group: CONSTRUCTEURS
+    df_record['C_GIC'] = 2300 # Group: NRLS
     df_record['C_CRE_DAT'] = pd.Timestamp.now().normalize()
     df_record['C_UPD_DAT'] = pd.Timestamp.now().normalize()
     df_record['C_ACC_OGW'] = 'ddr'
@@ -353,7 +379,7 @@ def insert_relations(engine: Engine, df_extended: pd.DataFrame, group: str, DB_P
         pd.DataFrame: The DataFrame of demoted owners (only for PO group).
     """
     table_name = 't_mc_person'
-    df_demoted_owners = pd.DataFrame() 
+    df_default_owners = pd.DataFrame() 
     df_new_assignments = pd.DataFrame()
     
     # --- 1. Konfiguration und dynamische Spaltenwahl ---
@@ -364,14 +390,14 @@ def insert_relations(engine: Engine, df_extended: pd.DataFrame, group: str, DB_P
     elif group.upper() == 'PCME_2':
         title = 'Product Coordinator'
         cid_col = 'PCME2_CID'
-        step_no = 15
+        step_no = 16
     elif group.upper() == 'PCME_3':        
         title = 'Product Coordinator'
         cid_col = 'PCME3_CID'
-        step_no = 18
+        step_no = 19
     else:
         print(f"⚠️ Unknown group: {group}")
-        return df_new_assignments, df_demoted_owners  # Return empty DataFrames for unknown group
+        return df_new_assignments, df_default_owners  # Return empty DataFrames for unknown group
 
     print(f"\nℹ️\tStep {step_no}: Preparing {title} relationships for {group.upper()} in {table_name.upper()}...")
 
@@ -387,7 +413,7 @@ def insert_relations(engine: Engine, df_extended: pd.DataFrame, group: str, DB_P
 
     if df_insert.empty:
         print(f"ℹ️\tNo MCODE {title} relationships to be added.")
-        return df_new_assignments, df_demoted_owners
+        return df_new_assignments, df_default_owners
 
     # --- 3. Abgleich mit der Datenbank (Exakte Treffer) ---
     mc_id_list = df_insert['C_ID_1'].unique().tolist()
@@ -409,7 +435,7 @@ def insert_relations(engine: Engine, df_extended: pd.DataFrame, group: str, DB_P
 
     if df_new_assignments.empty:
         print(f"ℹ️\tAll {title} relationships already exist in the database.")
-        return df_new_assignments, df_demoted_owners
+        return df_new_assignments, df_default_owners
 
     # --- 4. DEFAULT OWNER SWITCH (Nur für PO) ---
     if group.upper() == 'PO':
@@ -425,15 +451,15 @@ def insert_relations(engine: Engine, df_extended: pd.DataFrame, group: str, DB_P
                 temp_list.append(df_old_owners)
 
         if temp_list:
-            df_demoted_owners = pd.concat(temp_list, ignore_index=True)
-            df_demoted_owners.columns = df_demoted_owners.columns.str.upper()
-            df_demoted_owners = df_demoted_owners.rename(columns={'C_ID_1': 'MCODE_CID', 'C_ID_2': 'PRS_CID'})
+            df_default_owners = pd.concat(temp_list, ignore_index=True)
+            df_default_owners.columns = df_default_owners.columns.str.upper()
+            df_default_owners = df_default_owners.rename(columns={'C_ID_1': 'MCODE_CID', 'C_ID_2': 'PRS_CID'})
             if not RUN_MODE.upper() == 'DRY_RUN':
-                demoted_csv_path = f"Data/{DB_PROFILE}_{table_name.upper()}_BACKUP_{group.upper()}_before_DEMOTION.csv"
+                demoted_csv_path = f"Data/BACKUP/{DB_PROFILE}_{table_name.upper()}_BACKUP_{group.upper()}_before_DEMOTION.csv"
             else:
-                demoted_csv_path = f"Data/{DB_PROFILE}_{table_name.upper()}_BACKUP_{group.upper()}_before_DEMOTION_{RUN_MODE.upper()}.csv"
-            df_demoted_owners.to_csv(demoted_csv_path, index=False)
-            print(f"✅\tSaved {len(df_demoted_owners)} demoted owners to {demoted_csv_path}")
+                demoted_csv_path = f"Data/BACKUP/{DB_PROFILE}_{table_name.upper()}_BACKUP_{group.upper()}_before_DEMOTION_{RUN_MODE.upper()}.csv"
+            df_default_owners.to_csv(demoted_csv_path, index=False)
+            print(f"✅\tSaved {len(df_default_owners)} demoted owners to {demoted_csv_path}")
 
         # Switch ausführen: Bestehende 'y' auf 'n' setzen
         if not RUN_MODE.upper() == 'DRY_RUN':
@@ -450,6 +476,7 @@ def insert_relations(engine: Engine, df_extended: pd.DataFrame, group: str, DB_P
                     conn.execute(update_stmt, update_params)
         
         print(f"✅\tDemoted existing default owners from 'y' to 'n' for {len(target_mcodes)} MCODEs.")
+    
     # --- 5. Insert vorbereiten ---
     if next_cid is None:
         next_cid = get_max_cid(engine, table_name) + 1
@@ -462,8 +489,8 @@ def insert_relations(engine: Engine, df_extended: pd.DataFrame, group: str, DB_P
     df_new_assignments['PC'] = 'y' if group.upper().startswith('PC') else 'n'
     df_new_assignments['MO'] = 'n'
     df_new_assignments['DEF_OWNER'] = 'y' if group.upper() == 'PO' else 'n'
-    df_new_assignments['C_UIC'] = 1829
-    df_new_assignments['C_GIC'] = 1201
+    df_new_assignments['C_UIC'] = 1829 # User: PLM_MIGRATOR
+    df_new_assignments['C_GIC'] = 2300 # Group: NRLS
     df_new_assignments['C_CRE_DAT'] = pd.Timestamp.now().normalize()
     df_new_assignments['C_UPD_DAT'] = pd.Timestamp.now().normalize()
     df_new_assignments['C_ACC_OGW'] = 'ddr'
@@ -483,10 +510,10 @@ def insert_relations(engine: Engine, df_extended: pd.DataFrame, group: str, DB_P
                 print("\n" + "="*60)
                 print(f"📊 SUMMARY: {title.upper()} REPLACEMENT")
                 print(f"Total new relations: {len(df_new_assignments)}")
-                print(f"Owners demoted from 'y' to 'n': {len(df_demoted_owners)}")
+                print(f"Owners demoted from 'y' to 'n': {len(df_default_owners)}")
                 
                 # Zeige Beispiele für den Wechsel
-                for _, row in df_demoted_owners.head(10).iterrows():
+                for _, row in df_default_owners.head(10).iterrows():
                     m_cid = row['MCODE_CID']
                     old_u_cid = row['PRS_CID']
                     # Finde den neuen User für diesen MCODE im Insert-DF
@@ -502,7 +529,7 @@ def insert_relations(engine: Engine, df_extended: pd.DataFrame, group: str, DB_P
         print(f"✅\tNew {title} relationships saved to 'Data/{DB_PROFILE}_{table_name.upper()}_new_{group.upper()}_relations_{RUN_MODE.upper()}.csv'.")
     
     if group.upper() == 'PO':
-        return df_new_assignments, df_demoted_owners
+        return df_new_assignments, df_default_owners
     else:
         return df_new_assignments,   pd.DataFrame()
 
@@ -551,16 +578,16 @@ def insert_group_memberships(engine: Engine, df_inserts: pd.DataFrame, group: st
     table_name = 't_grp_usr'
     if group.upper() == 'PO':
         title = 'Product Owner'
-        step_no = 14
-        cid_col = 'PO_CID'
+        step_no = 15
+        cid_col = 'PO_USR_CID'
     elif group.upper() == 'PCME_2':
         title = 'Product Coordinator'
-        step_no = 17
-        cid_col = 'PCME2_CID'
+        step_no = 18
+        cid_col = 'PCME2_USR_CID'
     elif group.upper() == 'PCME_3':
         title = 'Product Coordinator'
-        step_no = 20
-        cid_col = 'PCME3_CID'
+        step_no = 21
+        cid_col = 'PCME3_USR_CID'
     else:
         print(f"⚠️Unknown group: {group}")
         return pd.DataFrame() # Return empty DataFrame for unknown group
@@ -619,7 +646,7 @@ def insert_group_memberships(engine: Engine, df_inserts: pd.DataFrame, group: st
     df_record['C_VERSION'] = 1
     df_record['C_LOCK'] = 0
     df_record['C_UIC'] = 1829
-    df_record['C_GIC'] = 1201
+    df_record['C_GIC'] = 2300 # Group: NRLS
     df_record['C_CRE_DAT'] = pd.Timestamp.now().normalize()
     df_record['C_UPD_DAT'] = pd.Timestamp.now().normalize()
     df_record['C_ACC_OGW'] = 'ddr'
@@ -628,7 +655,7 @@ def insert_group_memberships(engine: Engine, df_inserts: pd.DataFrame, group: st
 
     # Mapping der eigentlichen Daten (Werte aus dem gefilterten df_to_process)
     df_record['C_ID_1'] = df_to_process['GROUP_CID'].values
-    df_record['C_ID_2'] = df_to_process['USER_CID'].values
+    df_record['C_ID_2'] = df_to_process[cid_col].values
 
     print(f"✅\tPrepared {num_new} new entries for insertion.")
     
@@ -673,11 +700,11 @@ def delete_relations(engine: Engine, df_deletes: pd.DataFrame, group: str, DB_PR
         cid_col = 'PO_CID'
     elif group.upper() == 'PCME_2':
         title = 'Product Coordinator'
-        step_no = 21
+        step_no = 22
         cid_col = 'PCME2_CID'
     elif group.upper() == 'PCME_3':
         title = 'Product Coordinator'
-        step_no = 22
+        step_no = 23
         cid_col = 'PCME3_CID'
     elif group.upper() == 'DO':
         title = 'Deleted Owner'
@@ -707,13 +734,14 @@ def delete_relations(engine: Engine, df_deletes: pd.DataFrame, group: str, DB_PR
                 bck_list.append(dict(bck_row._mapping))
     # --- SAVE BACKUP TO CSV ---
     df_backup = pd.DataFrame(bck_list)
+    df_backup.columns = df_backup.columns.str.upper()
     print(f"ℹ️\tBackup data for DELETION: {len(df_backup)} rows saved.")
     if not RUN_MODE.upper() == 'DRY_RUN':
-        df_backup.to_csv(f"Data/{DB_PROFILE}_{table_name.upper()}_BACKUP_before_DELETION_{group.upper()}.csv", index=False) 
-        print(f"✅\tBackup saved to 'Data/{DB_PROFILE}_{table_name.upper()}_BACKUP_before_DELETION_{group.upper()}.csv'.")
+        df_backup.to_csv(f"Data/BACKUP/{DB_PROFILE}_{table_name.upper()}_BACKUP_{group.upper()}_before_DELETION.csv", index=False) 
+        print(f"✅\tBackup saved to 'Data/BACKUP/{DB_PROFILE}_{table_name.upper()}_BACKUP_{group.upper()}_before_DELETION.csv'.")
     else:
-        df_backup.to_csv(f"Data/{DB_PROFILE}_{table_name.upper()}_BACKUP_before_DELETION_{group.upper()}_{RUN_MODE.upper()}.csv", index=False) 
-        print(f"✅\tBackup saved to 'Data/{DB_PROFILE}_{table_name.upper()}_BACKUP_before_DELETION_{group.upper()}_{RUN_MODE.upper()}.csv'.")
+        df_backup.to_csv(f"Data/BACKUP/{DB_PROFILE}_{table_name.upper()}_BACKUP_{group.upper()}_before_DELETION_{RUN_MODE.upper()}.csv", index=False) 
+        print(f"✅\tBackup saved to 'Data/BACKUP/{DB_PROFILE}_{table_name.upper()}_BACKUP_{group.upper()}_before_DELETION_{RUN_MODE.upper()}.csv'.")
 
     num_deleted = 0
     if not RUN_MODE.upper() == 'DRY_RUN':
@@ -721,6 +749,89 @@ def delete_relations(engine: Engine, df_deletes: pd.DataFrame, group: str, DB_PR
             delete_stmt = text(f"DELETE FROM {table_name} WHERE C_ID_1 = :mc_cid AND C_ID_2 = :user_cid")
             params = {
                 'mc_cid': row['MCODE_CID'],
+                'user_cid': row[cid_col]
+            }
+            with engine.begin() as conn:
+                result = conn.execute(delete_stmt, params)
+                num_deleted += result.rowcount
+    
+        print(f"✅\tSuccessfully deleted {num_deleted} {title} relationships from {table_name.upper()}.")
+        df_deletes.to_csv(f"Data/{DB_PROFILE}_{table_name.upper()}_deleted_{group.upper()}_relations.csv", index=False)
+        print(f"✅\tDeleted {title} relationships saved to 'Data/{DB_PROFILE}_{table_name.upper()}_deleted_{group.upper()}_relations.csv'.")
+    else:
+        print(f"ℹ️\tDRY_RUN mode: No data deleted from {table_name.upper()}.")
+        df_deletes.to_csv(f"Data/{DB_PROFILE}_{table_name.upper()}_deleted_{group.upper()}_relations_{RUN_MODE.upper()}.csv", index=False)
+        print(f"✅\tDeleted {title} relationships saved to 'Data/{DB_PROFILE}_{table_name.upper()}_deleted_{group.upper()}_relations_{RUN_MODE.upper()}.csv'.")
+    return df_deletes
+
+def delete_group_memberships(engine: Engine, df_deletes: pd.DataFrame, group:str, DB_PROFILE: str, RUN_MODE: str) -> pd.DataFrame:
+    """Deletes Group-User relationships from the specified table.
+    Parameters:
+        engine (Engine): SQLAlchemy Engine connected to the database.
+        df_deletes (pd.DataFrame): DataFrame containing the Group-User data to delete.
+        group (str): 'PO' for Product Owner or 'PCME_2'/'PCME_3' for Product Coordinator, or 'DO' for Default Owners.
+        DB_PROFILE (str): Database profile name for logging purposes.
+        RUN_MODE (str): 'DRY_RUN' to simulate deletions without executing them.
+    Returns:
+        pd.DataFrame: The DataFrame of deleted relationships.
+    """
+    table_name = 't_grp_usr'
+    if group.upper() == 'PO':
+        title = 'Product Owner'
+        step_no = 80
+        cid_col = 'PO_USR_CID'
+    elif group.upper() == 'PCME_2':
+        title = 'Product Coordinator'
+        step_no = 81
+        cid_col = 'PCME2_USR_CID'
+    elif group.upper() == 'PCME_3':
+        title = 'Product Coordinator'
+        step_no = 82
+        cid_col = 'PCME3_USR_CID'
+    elif group.upper() == 'DO':
+        title = 'Default Owner'
+        step_no = 13
+        cid_col = 'USR_CID'
+    else:
+        print(f"⚠️Unknown group: {group}")
+        return pd.DataFrame() # Return empty DataFrame for unknown group
+    
+    print(f"\nℹ️\tStep {step_no}: Deleting group memberships from {table_name.upper()} for group {group.upper()}...")
+    
+    if df_deletes.empty:
+        return pd.DataFrame()
+    
+    # --- BACKUP BEFORE DELETE ---
+    bck_list = []
+    for _, row in df_deletes.iterrows():        
+        backup_stmt = text(f"SELECT * FROM {table_name} WHERE C_ID_1 = :grp_cid AND C_ID_2 = :user_cid")
+        params = {
+            'grp_cid': row['GROUP_CID'],
+            'user_cid': row[cid_col]
+        }
+        with engine.connect() as conn:
+            result = conn.execute(backup_stmt, params)
+            backup_data = result.fetchall()
+            for bck_row in backup_data:
+                bck_list.append(dict(bck_row._mapping))
+    
+    # --- SAVE BACKUP TO CSV ---
+    df_backup = pd.DataFrame(bck_list)
+    df_backup.columns = df_backup.columns.str.upper()
+    print(f"ℹ️\tBackup data for DELETION: {len(df_backup)} rows saved.")
+    if not RUN_MODE.upper() == 'DRY_RUN':
+        df_backup.to_csv(f"Data/BACKUP/{DB_PROFILE}_{table_name.upper()}_BACKUP_{group.upper()}_before_DELETION.csv", index=False) 
+        print(f"✅\tBackup saved to 'Data/BACKUP/{DB_PROFILE}_{table_name.upper()}_BACKUP_{group.upper()}_before_DELETION.csv'.")
+    else:
+        df_backup.to_csv(f"Data/BACKUP/{DB_PROFILE}_{table_name.upper()}_BACKUP_{group.upper()}_before_DELETION_{RUN_MODE.upper()}.csv", index=False) 
+        print(f"✅\tBackup saved to 'Data/BACKUP/{DB_PROFILE}_{table_name.upper()}_BACKUP_{group.upper()}_before_DELETION_{RUN_MODE.upper()}.csv'.")
+
+    num_deleted = 0
+    if not RUN_MODE.upper() == 'DRY_RUN':
+        for _, row in df_deletes.iterrows():
+            delete_stmt = text(f"DELETE FROM {table_name} WHERE C_ID_1 = :grp_cid AND C_ID_2 = :user_cid")
+            params = {
+                'grp_cid': row['GROUP_CID'],
                 'user_cid': row[cid_col]
             }
             with engine.begin() as conn:

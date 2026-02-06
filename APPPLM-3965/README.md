@@ -21,18 +21,19 @@ Automated import procedure to add new Product Owners (PO) and Product Coordinato
 - **Smart Assignment**: Adds the new inserted POs and PCs to their MCODE specific `Z_MCODE` or `Y_MCODE` User Group in `T_GRP_USR`.
 - **Audit Trail**: Automatically creates history entries for every new record.
 - **Backup**: Generates CSV copies of all inserted data for backtracking and verification.
-- **Deletion**: This gript will `DELETE` the demoted former Product Owners from the `T_MC_PERSON`
+- **Deletion**: This gript will `DELETE` the demoted former Product Owners from the `T_MC_PERSON` as well as remove their records from `T_GRP_USR`
 
 ### Out of Scope
 - **No Unassignment**: This script not remove demoted Product Owners from their former MCODE specific `Z_MCODE` or `Y_MCODE` User Group in `T_GRP_USR`.
 - **No User Confirmation**: 
-> ⚠️ **Warning:** This script will write directly into the table `T_MC_PERSON` and `T_MC_HIS` without a request of confirmation. Therefore you might want to backup these tables first or use the created CSV files to rollback any changes.
+> ⚠️ **Warning:** This script will write directly into the table `T_MC_PERSON`, `T_MC_HIS` and `T_GRP_USR` without a request of confirmation. Therefore you might want to backup these tables first or use the created CSV files to rollback any changes.
 
 ## Project Structure
 ```
 APPPLM-3965/
 ├── dal/
 ├── Data/                   <-- Output directory for CSV files
+|   ├── BACKUP/             <-- Backup Files to restore changes
 ├── Excel/                  <-- Place data.xlsx here
 ├── util/             
 ├── .db_secrets.ini         <-- Your credentials (to be created from Template File)
@@ -49,7 +50,9 @@ APPPLM-3965/
 | 16-01-2026 | V1.0.2 | Jesco Wurm (ICP) | Implementation of User to Group Assignment for new records |
 | 17-01-2026 | V1.0.3 | Jesco Wurm (ICP) | Implementation of additional BACKUPs |
 | 18-01-2026 | V1.0.4 | Jesco Wurm (ICP) | Implementation of the DRY_RUN Mode |
-| 19-01-2026 | V1.0.5 | Jesco Wurm (ICP) | Implementation of the Deletion of former DEF_OWNERS | 
+| 19-01-2026 | V1.0.5 | Jesco Wurm (ICP) | Implementation of the Deletion of former DEF_OWNERS |
+| 22-01-2026 | V1.0.6 | Jesco Wurm (ICP) | Bugfix for new created records in tables `T_MC_PERSON` and `T_GRP_USR` |
+| 06-02-2026 | V1.0.7 | Jesco Wurm (ICP) | New Feature: Previous Default Owners will also be removed from ther Z_ Groups |
 
 ## Running the Program
 1. Open a Terminal
