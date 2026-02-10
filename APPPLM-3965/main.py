@@ -55,7 +55,7 @@ def evaluate_prs(df_prs: pd.DataFrame, df_prs_cid: pd.DataFrame, group: str, DB_
     print(f"✅\tMissing {group} list saved to 'Data/{DB_PROFILE}_missing_{group}s.csv'.")
 
 def main():
-    print("Version 1.0.7\n\nHello from APPPLM-3965!\nA script to update MCODE - Product Owner - Product Coordinator relationships in a Agile e6 database based on an Excel file.\nWritten by Jesco Wurm (ICP).\n")
+    print("Version 1.0.8\n\nHello from APPPLM-3965!\nA script to update MCODE - Product Owner - Product Coordinator relationships in a Agile e6 database based on an Excel file.\nWritten by Jesco Wurm (ICP).\n")
     # --- 1. DRY_RUN Abfrage mit Validierung ---
     while True:
         reply = input("❓\tDo you want to simulate the run aka. DRY_RUN? (Y/N) ").strip().upper()
@@ -221,7 +221,7 @@ def main():
                 ]
         temp_list = []
         for role in roles:
-            subset = df_highlighted[['MCODE', 'MCODE_CID',role['col']]].copy()
+            subset = df_extended[['MCODE', 'MCODE_CID',role['col']]].copy()
             subset['GROUP_NAME'] = role['grp_prefix'] + subset['MCODE']
             subset = subset.rename(columns={role['col']: 'USER_CID'})
             temp_list.append(subset)
@@ -229,7 +229,7 @@ def main():
         # Join with group C_IDs
         df_final_grp_joins = pd.merge(df_group_joins, df_usr_grp_cid_renamed,
                                         left_on='GROUP_NAME', right_on='GROUP_NAME', how='left')
-
+        df_final_grp_joins.to_csv(f"Data/{DB_PROFILE}_group_data_before_update.csv", index=False)
         df_extended['BOTH_PC_MIS'] = df_extended['PCME2_CID'].isna() & df_extended['PCME3_CID'].isna()
         df_extended.to_csv(f"Data/{DB_PROFILE}_extended_data_before_update.csv", index=False)
         print(f"✅\tExtended data before update saved to 'Data/{DB_PROFILE}_extended_data_before_update.csv'.")

@@ -597,12 +597,25 @@ def insert_group_memberships(engine: Engine, df_inserts: pd.DataFrame, group: st
     if df_inserts.empty:
         return pd.DataFrame()
 
+    # NEU: Dubletten bereits im Input-DataFrame entfernen
+    df_inserts = df_inserts.drop_duplicates(subset=['GROUP_CID', cid_col]).copy()
+    
+    # NEU: Typen vereinheitlichen für sicheren Merge
+    df_inserts['GROUP_CID'] = df_inserts['GROUP_CID'].astype(int)
+    df_inserts[cid_col] = df_inserts[cid_col].astype(int)
+
+    print(f"\nℹ️\tStep {step_no}: Checking and inserting group memberships into {table_name.upper()}...")
+
     # --- SCHRITT 1: Existierende Relationen prüfen ---
     grp_cid_list = df_inserts['GROUP_CID'].unique().tolist()
     df_existing_all = pd.DataFrame() 
     
-    for i, chunk in enumerate(chunk_list(grp_cid_list, 900)):
-        existing_query = text(f"SELECT C_ID_1, C_ID_2 FROM {table_name} WHERE C_ID_1 IN ({', '.join(f':mc_{j}' for j in range(len(chunk)))})")
+    for chunk in chunk_list(grp_cid_list, 900):
+        existing_query = text(f"""
+            SELECT C_ID_1, C_ID_2 
+            FROM {table_name} 
+            WHERE C_ID_1 IN ({', '.join(f':mc_{j}' for j in range(len(chunk)))})
+        """)
         existing_params = {f'mc_{j}': mc_id for j, mc_id in enumerate(chunk)}
         
         with engine.connect() as conn:
@@ -612,24 +625,28 @@ def insert_group_memberships(engine: Engine, df_inserts: pd.DataFrame, group: st
         df_existing_all = pd.concat([df_existing_all, df_chunk], ignore_index=True)
     print(f"ℹ️\tFetched {len(df_existing_all)} existing group memberships from {table_name.upper()}.")
 
-    # --- SCHRITT 2: Dubletten aus den Inserts entfernen ---
-    # Wir machen einen Left-Join der Inserts gegen die DB-Daten
-    df_to_process = df_inserts.merge(
-        df_existing_all, 
-        left_on=['GROUP_CID', cid_col], 
-        right_on=['C_ID_1', 'C_ID_2'], 
-        how='left', 
-        indicator=True
-    )
-
-    # Nur die Zeilen behalten, die noch NICHT in der DB sind
-    df_to_process = df_to_process[df_to_process['_merge'] == 'left_only'].copy()
+    # --- SCHRITT 2: Dubletten entfernen ---
+    if not df_existing_all.empty:
+        # Sicherstellen, dass die Typen identisch sind (Oracle Numeric vs Python Int)
+        df_existing_all['C_ID_1'] = df_existing_all['C_ID_1'].astype(int)
+        df_existing_all['C_ID_2'] = df_existing_all['C_ID_2'].astype(int)
+        
+        df_to_process = df_inserts.merge(
+            df_existing_all, 
+            left_on=['GROUP_CID', cid_col], 
+            right_on=['C_ID_1', 'C_ID_2'], 
+            how='left', 
+            indicator=True
+        )
+        df_to_process = df_to_process[df_to_process['_merge'] == 'left_only'].copy()
+    else:
+        df_to_process = df_inserts.copy()
     
     num_new = len(df_to_process)
     skipped = len(df_inserts) - num_new
 
     if skipped > 0:
-        print(f"⚠️\tSkipped {skipped} entries (already existing in {table_name}).")
+        print(f"⚠️\tSkipped {skipped} entries (already existing in {table_name.upper()}).")
 
     if num_new == 0:
         print(f"ℹ️\tNo new {title} relationships to be added.")
