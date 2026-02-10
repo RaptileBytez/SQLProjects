@@ -304,8 +304,8 @@ def insert_history_entries(engine: Engine, df_inserts: pd.DataFrame, group: str,
     df_record['C_LOCK'] = 0
     df_record['C_UIC'] = 1829  # User: PLM_MIGRATOR
     df_record['C_GIC'] = 2300 # Group: NRLS
-    df_record['C_CRE_DAT'] = pd.Timestamp.now().normalize()
-    df_record['C_UPD_DAT'] = pd.Timestamp.now().normalize()
+    df_record['C_CRE_DAT'] = pd.Timestamp.now()
+    df_record['C_UPD_DAT'] = pd.Timestamp.now()
     df_record['C_ACC_OGW'] = 'ddr'
 
     # map columns from df_inserts preserving row order
@@ -471,7 +471,7 @@ def insert_relations(engine: Engine, df_extended: pd.DataFrame, group: str, DB_P
                     AND C_ID_1 IN ({', '.join(f':m_{j}' for j in range(len(chunk)))})
                 """)
                 update_params = {f'm_{j}': m_id for j, m_id in enumerate(chunk)}
-                update_params['now'] = pd.Timestamp.now().normalize()
+                update_params['now'] = pd.Timestamp.now()
                 with engine.begin() as conn:
                     conn.execute(update_stmt, update_params)
         
@@ -491,8 +491,8 @@ def insert_relations(engine: Engine, df_extended: pd.DataFrame, group: str, DB_P
     df_new_assignments['DEF_OWNER'] = 'y' if group.upper() == 'PO' else 'n'
     df_new_assignments['C_UIC'] = 1829 # User: PLM_MIGRATOR
     df_new_assignments['C_GIC'] = 2300 # Group: NRLS
-    df_new_assignments['C_CRE_DAT'] = pd.Timestamp.now().normalize()
-    df_new_assignments['C_UPD_DAT'] = pd.Timestamp.now().normalize()
+    df_new_assignments['C_CRE_DAT'] = pd.Timestamp.now()
+    df_new_assignments['C_UPD_DAT'] = pd.Timestamp.now()
     df_new_assignments['C_ACC_OGW'] = 'ddr'
 
     # --- 6. Datenbank Insert ---
@@ -664,8 +664,8 @@ def insert_group_memberships(engine: Engine, df_inserts: pd.DataFrame, group: st
     df_record['C_LOCK'] = 0
     df_record['C_UIC'] = 1829
     df_record['C_GIC'] = 2300 # Group: NRLS
-    df_record['C_CRE_DAT'] = pd.Timestamp.now().normalize()
-    df_record['C_UPD_DAT'] = pd.Timestamp.now().normalize()
+    df_record['C_CRE_DAT'] = pd.Timestamp.now()
+    df_record['C_UPD_DAT'] = pd.Timestamp.now()
     df_record['C_ACC_OGW'] = 'ddr'
     df_record['C_ACCESS'] = 'd'
     df_record['C_DEF_FLG'] = 'n'

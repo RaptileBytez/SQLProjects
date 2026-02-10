@@ -55,7 +55,7 @@ def evaluate_prs(df_prs: pd.DataFrame, df_prs_cid: pd.DataFrame, group: str, DB_
     print(f"✅\tMissing {group} list saved to 'Data/{DB_PROFILE}_missing_{group}s.csv'.")
 
 def main():
-    print("Version 1.0.8\n\nHello from APPPLM-3965!\nA script to update MCODE - Product Owner - Product Coordinator relationships in a Agile e6 database based on an Excel file.\nWritten by Jesco Wurm (ICP).\n")
+    print("Version 1.0.9\n\nHello from APPPLM-3965!\nA script to update MCODE - Product Owner - Product Coordinator relationships in a Agile e6 database based on an Excel file.\nWritten by Jesco Wurm (ICP).\n")
     # --- 1. DRY_RUN Abfrage mit Validierung ---
     while True:
         reply = input("❓\tDo you want to simulate the run aka. DRY_RUN? (Y/N) ").strip().upper()

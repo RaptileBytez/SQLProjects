@@ -59,6 +59,7 @@ Find the documentation of both a `DRY_RUN` and the run to update `PQE Environmen
 | 22-01-2026 | V1.0.6 | Jesco Wurm (ICP) | Bugfix for new created records in tables `T_MC_PERSON` and `T_GRP_USR` |
 | 06-02-2026 | V1.0.7 | Jesco Wurm (ICP) | New Feature: Previous Default Owners will also be removed from their Z_ Groups |
 | 10-02-2026 | V1.0.8 | Jesco Wurm (ICP) | Bugfix: Use of extended DataFrame instead of the highlights fro Group Memberships |
+| 10-02-2026 | V1.0.9 | Jesco Wurm (ICP) | Bugfix: Removed Timestamp Normalization |
 
 ## Running the Program
 1. Open a Terminal
