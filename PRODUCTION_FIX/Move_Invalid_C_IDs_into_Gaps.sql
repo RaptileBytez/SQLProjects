@@ -1,10 +1,25 @@
--- ============================================================
--- Script: Fix invalid C_IDs in a given table
--- Description: Finds the smallest sufficient gap for
---              C_IDs > 1999999999 and moves them into it
--- Author: Jesco Wurm (ICP)
--- Date: 26.03.2026
--- ============================================================
+/*
+===============================================================================
+Script: Move_Invalid_C_IDs_into_Gaps.sql
+===============================================================================
+Description: Finds the smallest sufficient gap for
+              C_IDs > 1999999999 and moves them into it
+Author: Jesco Wurm (ICP)
+Creation Date: 26.03.2026
+Version: 1.0.0
+Last Modified: 26-03-2026
+Last Modified By: Jesco Wurm (ICP)
+Purpose:
+This script will:
+    - find invalid C_IDs within the table
+    - find possible gaps for the Invalid C_IDs
+    - move invalid C_IDs into the found valid range
+--------------------------------------------------------------------------------  
+Change History:
+Date          Author                Version     Description
+26-03-2026    Jesco Wurm (ICP)      1.0.0       Initial creation
+===============================================================================
+ */
 SET SERVEROUTPUT ON SIZE UNLIMITED;
 
 DECLARE
